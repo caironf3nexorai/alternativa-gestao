@@ -1,0 +1,312 @@
+.agendas-container {
+    display: flex;
+    gap: 24px;
+    height: calc(100vh - 220px);
+    /* Garante espaço para o Layout Header e Layout Footer */
+    align-items: stretch;
+}
+
+/* COLUNA ESQUERDA: LISTA DE AGENDAS */
+.agendas-sidebar {
+    flex: 0 0 30%;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.agendas-sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.agendas-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.agenda-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: transparent;
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+}
+
+.agenda-item:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.agenda-item.active {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.agenda-item-main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.agenda-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.agenda-title {
+    color: var(--text-main);
+    font-weight: 500;
+    font-size: 15px;
+}
+
+.agenda-badge {
+    background-color: var(--bg-main);
+    color: var(--text-secondary);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.agenda-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.agenda-item:hover .agenda-actions {
+    opacity: 1;
+}
+
+/* COLUNA DIREITA: LISTA DE ANOTAÇÕES */
+.anotacoes-main {
+    flex: 1;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.anotacoes-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.anotacoes-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.anotacao-card {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: border-color 0.2s;
+    position: relative;
+}
+
+.anotacao-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Modificadores de Estado (Vencida, Hoje, Concluída) */
+.anotacao-card.vencida {
+    border-color: var(--error);
+    background-color: rgba(231, 76, 60, 0.02);
+}
+
+.anotacao-card.hoje {
+    border-color: var(--warning);
+    background-color: rgba(243, 156, 18, 0.02);
+}
+
+.anotacao-card.amanha {
+    border-color: #f1c40f;
+    background-color: rgba(241, 196, 15, 0.02);
+}
+
+.anotacao-card.concluida {
+    opacity: 0.6;
+}
+
+.anotacao-card.concluida .anotacao-title {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+}
+
+.anotacao-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.anotacao-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--success);
+    margin-top: 2px;
+}
+
+.anotacao-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.anotacao-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.anotacao-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 12px;
+    margin-top: 4px;
+}
+
+.anotacao-date {
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: var(--bg-surface);
+    color: var(--text-secondary);
+}
+
+.anotacao-date.vencida-label {
+    color: var(--error);
+    background-color: rgba(231, 76, 60, 0.1);
+}
+
+.anotacao-date.hoje-label {
+    color: var(--warning);
+    background-color: rgba(243, 156, 18, 0.1);
+}
+
+.anotacao-date.amanha-label {
+    color: #f1c40f;
+    background-color: rgba(241, 196, 15, 0.1);
+}
+
+.empty-state-agenda {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 40px;
+    gap: 16px;
+}
+
+.empty-state-agenda h3 {
+    color: var(--text-main);
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.empty-state-agenda p {
+    max-width: 400px;
+    line-height: 1.5;
+}
+
+.btn-voltar-mobile {
+    display: none;
+}
+
+/* RESPONSIVIDADE AGENDAS */
+@media (max-width: 1024px) {
+    .agendas-container {
+        flex-direction: column;
+        height: auto;
+        gap: 0;
+    }
+
+    .agendas-sidebar {
+        flex: none;
+        height: calc(100vh - 160px);
+        /* Previne scroll infinito do body e prende o rodape */
+        border-radius: 8px;
+    }
+
+    .anotacoes-main {
+        flex: none;
+        height: calc(100vh - 160px);
+        border-radius: 8px;
+    }
+
+    .agendas-sidebar.is-hidden-mobile {
+        display: none !important;
+    }
+
+    .anotacoes-main.is-hidden-mobile {
+        display: none !important;
+    }
+
+    .btn-voltar-mobile {
+        display: flex;
+        /* Exibe botao de voltar apenas no mobile */
+        color: var(--text-main);
+    }
+
+    .anotacoes-header {
+        padding: 12px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .anotacoes-header-title {
+        width: 100%;
+    }
+
+    .anotacoes-header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .anotacoes-header h2 {
+        font-size: 16px !important;
+    }
+}

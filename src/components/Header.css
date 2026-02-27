@@ -1,0 +1,61 @@
+.page-header {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    background-color: var(--bg-main);
+    border-bottom: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.page-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-main);
+}
+
+.page-date {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.mobile-menu-btn {
+    display: none;
+    /* Escondido por padrão no Desktop */
+    color: var(--text-main);
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.mobile-menu-btn:hover {
+    background-color: var(--bg-surface);
+}
+
+@media (max-width: 1024px) {
+    .page-header {
+        padding: 0 16px;
+        /* Menos padding no Header no celular */
+        height: 64px;
+    }
+
+    .mobile-menu-btn {
+        display: block;
+        /* Mostra o botão hambúrguer no mobile */
+    }
+
+    .page-date {
+        display: none;
+        /* Esconde a data que toma muito espaço horizontal no celular */
+    }
+
+    .page-title {
+        font-size: 18px;
+        /* Título um pouco menor */
+    }
+}

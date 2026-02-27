@@ -1,0 +1,469 @@
+@import 'react-big-calendar/lib/css/react-big-calendar.css';
+
+/* Padding do module-container específico para Compromissos */
+.compromissos-page {
+    padding: 24px;
+}
+
+.compromissos-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 160px);
+    background-color: var(--bg-surface);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    padding: 24px;
+    gap: 20px;
+}
+
+.calendar-header-custom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+/* Base styles para os seletores de visualização Mês/Semana/Dia */
+.view-selector-group {
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    width: fit-content;
+}
+
+.view-selector-group .view-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: var(--bg-surface);
+    color: var(--text-secondary);
+    border: none;
+    border-radius: 0 !important;
+    /* Forces flat edges against generic calendar-actions button rules */
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.view-selector-group .view-btn:not(:first-child) {
+    border-left: 1px solid var(--border-color);
+}
+
+.view-selector-group .view-btn.active {
+    background-color: var(--primary-red);
+    color: white;
+}
+
+.view-selector-group .view-btn:hover:not(.active) {
+    background-color: var(--border-color);
+}
+
+.calendar-nav {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.calendar-nav button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-nav button:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.calendar-nav-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 16px;
+    color: var(--text-main);
+    min-width: 200px;
+    text-align: center;
+    text-transform: capitalize;
+}
+
+.calendar-actions button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+/* Customização do react-big-calendar */
+.rbc-calendar {
+    flex: 1;
+    font-family: inherit;
+    color: var(--text-main);
+}
+
+.rbc-month-view,
+.rbc-time-view,
+.rbc-agenda-view {
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--bg-main);
+}
+
+.rbc-header {
+    padding: 20px 0 !important;
+    font-weight: 600 !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    text-transform: capitalize !important;
+    font-size: 16px !important;
+    color: var(--text-main) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rbc-header+.rbc-header {
+    border-left: 1px solid var(--border-color) !important;
+}
+
+/* Minimiza a caixa de "Eventos de Dia Inteiro" */
+.rbc-allday-cell {
+    min-height: 0 !important;
+    height: 1px !important;
+    max-height: 1px !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+}
+
+/* Esconde a scrollbar do conteúdo de hora para alinhar header com content.
+   O scroll continua funcionando via roda do mouse / touch. */
+.rbc-time-content {
+    scrollbar-width: none !important;
+    /* Firefox */
+    -ms-overflow-style: none !important;
+    /* IE/Edge */
+}
+
+.rbc-time-content::-webkit-scrollbar {
+    display: none !important;
+    /* Chrome/Safari/Edge */
+}
+
+.rbc-time-header.rbc-overflowing {
+    margin-right: 0 !important;
+    border-right: none !important;
+}
+
+/* ==========================================
+   PADRONIZAÇÃO TOTAL DE BORDAS (todas as views)
+   Força var(--border-color) em TODAS as classes internas do react-big-calendar
+   ========================================== */
+
+/* Reset universal: qualquer borda interna herda nossa cor */
+.rbc-month-view *,
+.rbc-time-view *,
+.rbc-agenda-view * {
+    border-color: var(--border-color) !important;
+}
+
+/* Remove a borda direita fantasma que aparece na extrema direita da view Semana/Dia */
+.rbc-time-view {
+    border-right: none !important;
+}
+
+.rbc-time-content {
+    border-right: none !important;
+}
+
+.rbc-time-header {
+    border-right: none !important;
+}
+
+.rbc-time-header-content {
+    border-right: none !important;
+}
+
+.rbc-off-range-bg {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.rbc-today {
+    background-color: rgba(204, 34, 34, 0.05);
+}
+
+.rbc-day-bg+.rbc-day-bg {
+    border-left: 1px solid var(--border-color) !important;
+}
+
+.rbc-month-row+.rbc-month-row {
+    border-top: 1px solid var(--border-color) !important;
+}
+
+.rbc-date-cell {
+    padding: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.rbc-custom-event {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    height: 100%;
+}
+
+.rbc-custom-event strong {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rbc-event {
+    background: none;
+    padding: 0;
+    border: none !important;
+    border-radius: 4px;
+}
+
+.rbc-time-content {
+    border-top: 1px solid var(--border-color) !important;
+    position: relative !important;
+}
+
+/* Indicador de linha do horário atual exato enviado pelo usuário */
+.rbc-current-time-indicator {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #cc2222;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.rbc-time-gutter~.rbc-day-slot .rbc-current-time-indicator {
+    left: 0;
+}
+
+.rbc-time-header.rbc-overflowing {
+    margin-right: 0 !important;
+}
+
+.rbc-time-content>.rbc-time-gutter {
+    position: relative;
+    z-index: 4;
+}
+
+.rbc-time-header-content {
+    border-left: 1px solid var(--border-color) !important;
+}
+
+/* Força rigorosamente as colunas de "Horas" (gutters) a terem a mesma medida exata 
+   tanto no cabeçalho quanto no conteúdo para o alinhamento perfeito da grade subsequente */
+.rbc-time-gutter,
+.rbc-header-gutter {
+    min-width: 60px !important;
+    max-width: 60px !important;
+    width: 60px !important;
+}
+
+.rbc-time-slot {
+    border-top: 1px solid var(--border-color) !important;
+}
+
+.rbc-timeslot-group {
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* Linhas entre sub-slots dentro de cada hora (mesma cor padrão, sutilmente mais leve) */
+.rbc-day-slot .rbc-time-slot {
+    border-top: 1px solid var(--border-color) !important;
+}
+
+.empty-state-oauth {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 160px);
+    background-color: var(--bg-surface);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    padding: 40px;
+    text-align: center;
+    gap: 20px;
+}
+
+.empty-state-oauth h2 {
+    font-size: 24px;
+    margin: 0;
+    color: var(--text-main);
+}
+
+.empty-state-oauth p {
+    color: var(--text-secondary);
+    max-width: 500px;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.google-auth-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    background-color: #fff;
+    color: #3c4043;
+    font-weight: 600;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.2s;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.google-auth-btn:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 768px) {
+    .compromissos-page {
+        padding: 4px !important;
+    }
+
+    .compromissos-container {
+        padding: 6px;
+        min-height: 700px;
+        height: 700px;
+        overflow: visible;
+        gap: 6px;
+        border: none;
+        border-radius: 0;
+    }
+
+    .calendar-header-custom {
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+        margin-bottom: 0;
+    }
+
+    .calendar-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .calendar-nav-title {
+        width: 100%;
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .calendar-actions {
+        width: 100% !important;
+        gap: 6px !important;
+    }
+
+    .view-selector-group {
+        display: flex;
+        justify-content: space-between;
+        width: 100% !important;
+        gap: 0 !important;
+        /* IMPORTANTE: Zera o gap interno para não mostrar frestas azuis */
+    }
+
+    .view-selector-group .view-btn {
+        flex: 1;
+        text-align: center;
+        padding: 8px 4px;
+        font-size: 14px;
+        border-radius: 0;
+        /* Important: Remove border radiuses inside the group to make a continuous pill */
+        margin: 0;
+    }
+
+    .calendar-actions>button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .calendar-actions>button.btn-primary {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .calendar-actions>button.btn-icon {
+        flex: 0 0 auto;
+    }
+
+    .rbc-calendar {
+        font-size: 11px;
+    }
+
+    /* Forçar Calendario a não ter scroll lateral */
+    .rbc-time-view,
+    .rbc-time-content {
+        overflow-x: hidden !important;
+    }
+
+    .rbc-time-header-content,
+    .rbc-day-slot {
+        min-width: 0 !important;
+    }
+
+    .rbc-time-gutter {
+        min-width: 35px !important;
+        font-size: 10px;
+    }
+
+    .rbc-timeslot-group {
+        min-height: 40px !important;
+    }
+
+    .rbc-header {
+        font-size: 10px;
+        padding: 4px 1px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        min-width: 0 !important;
+    }
+
+    .rbc-date-cell {
+        font-size: 12px;
+        padding: 4px;
+    }
+
+    .rbc-custom-event {
+        font-size: 10px;
+        padding: 2px;
+        border-radius: 2px;
+        height: auto;
+    }
+}
+
+.rbc-time-slot:not(:first-child) {
+    border-top: none !important;
+}
+
+.rbc-day-slot .rbc-time-slot:not(:first-child) {
+    border-top: none !important;
+}

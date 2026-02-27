@@ -1,0 +1,80 @@
+.layout-root {
+    display: flex;
+    min-height: 100vh;
+}
+
+.layout-content {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.layout-main {
+    flex: 1;
+    padding: 40px;
+    background-color: var(--bg-main);
+}
+
+.mobile-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+}
+
+@media (max-width: 1024px) {
+    .layout-content {
+        margin-left: 0;
+        /* height and overflow removed to allow natural document scroll */
+    }
+
+    .layout-main {
+        padding: 8px;
+        /* flex and overflow constraints removed to allow content to dictate height */
+    }
+}
+
+.layout-footer {
+    padding: 12px 24px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    background-color: var(--bg-surface);
+}
+
+.db-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.db-status.connected {
+    color: var(--success);
+}
+
+.db-status.error {
+    color: var(--error);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--text-secondary);
+}
+
+.status-dot.ok {
+    background-color: var(--success);
+    box-shadow: 0 0 8px var(--success);
+}
+
+.status-dot.nok {
+    background-color: var(--error);
+    box-shadow: 0 0 8px var(--error);
+}
