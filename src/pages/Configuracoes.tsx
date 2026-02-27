@@ -32,7 +32,7 @@ export function Configuracoes() {
 
     // Conexões
     const [supabaseStatus, setSupabaseStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
-    const [calendarConnected, setCalendarConnected] = useState(false);
+    const [calendarStatus, setCalendarStatus] = useState<'checking' | 'connected' | 'waiting' | 'disconnected'>('checking');
     const [calendarEmail, setCalendarEmail] = useState('');
 
     useEffect(() => {
@@ -86,14 +86,14 @@ export function Configuracoes() {
         try {
             const { data, error } = await supabase.from('auth_tokens').select('*').limit(1).maybeSingle();
             if (!error && data) {
-                setCalendarConnected(true);
+                setCalendarStatus('connected');
                 // We'd ideally store email alongside the token, but for now we just show connected
                 setCalendarEmail('Conta vinculada');
             } else {
-                setCalendarConnected(false);
+                setCalendarStatus('waiting');
             }
         } catch {
-            setCalendarConnected(false);
+            setCalendarStatus('waiting');
         }
     };
 
@@ -115,10 +115,18 @@ export function Configuracoes() {
 
     const handleConfirmDisconnect = async () => {
         try {
-            const { error } = await supabase.from('auth_tokens').delete().neq('id', '0'); // delete all
+            // Em vez de comparar string '0' (o que dá erro de UUID malformado no Postgres), 
+            // pedimos pra apagar qualquer token que tenha expirado no futuro ou passado, ou simplesmente não seja nulo.
+            const { error } = await supabase.from('auth_tokens').delete().not('id', 'is', null);
             if (error) throw error;
+
+            // Limpar tokens armazenados localmente (garantia extra)
+            localStorage.removeItem('google_calendar_token');
+            localStorage.removeItem('google_access_token');
+            localStorage.removeItem('google_refresh_token');
+
             setIsDisconnectModalOpen(false);
-            setCalendarConnected(false);
+            setCalendarStatus('disconnected');
             setCalendarEmail('');
             toast.success('Google Calendar desconectado com sucesso.');
         } catch (error) {
@@ -404,13 +412,13 @@ export function Configuracoes() {
                                     </div>
                                     <div className="connection-details">
                                         <h4>Integração Google Calendar</h4>
-                                        <div className={`status-badge-inline ${calendarConnected ? 'status-ok' : 'status-waiting'}`}>
+                                        <div className={`status-badge-inline ${calendarStatus === 'connected' ? 'status-ok' : calendarStatus === 'disconnected' ? 'status-error' : 'status-waiting'}`}>
                                             <span className="dot"></span>
-                                            {calendarConnected ? `Vinculado (${calendarEmail})` : 'Aguardando Login'}
+                                            {calendarStatus === 'connected' ? `Vinculado (${calendarEmail})` : calendarStatus === 'disconnected' ? 'Desconectado' : 'Aguardando Login'}
                                         </div>
                                     </div>
                                 </div>
-                                {calendarConnected && (
+                                {calendarStatus === 'connected' && (
                                     <button className="btn-disconnect" onClick={handleDisconnectCalendar}>
                                         Desconectar
                                     </button>
@@ -426,7 +434,7 @@ export function Configuracoes() {
             <ConfirmModal
                 isOpen={isDisconnectModalOpen}
                 title="Desconectar Calendar?"
-                description="Deseja realmente revogar a conexão com o Google Calendar? O sistema perderá acesso imediato à sua agenda externa de eventos."
+                description="Tem certeza que deseja desconectar o Google Calendar? Os compromissos existentes não serão afetados."
                 confirmText="Sim, Desconectar"
                 onConfirm={handleConfirmDisconnect}
                 onCancel={() => setIsDisconnectModalOpen(false)}

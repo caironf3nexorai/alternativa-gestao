@@ -134,5 +134,5 @@ export async function getValidAccessToken(): Promise<string | null> {
  * Logout do Calendar
  */
 export async function disconnectGoogleCalendar() {
-    await supabase.from('auth_tokens').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Delete table content blindly (since it's single user MVP essentially)
+    await supabase.from('auth_tokens').delete().not('id', 'is', null); // Delete table content blindly (since it's single user MVP essentially)
 }

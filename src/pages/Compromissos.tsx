@@ -8,6 +8,7 @@ import { Plus, ChevronLeft, ChevronRight, Calendar as CalendarIcon, LogOut, Aler
 import toast from 'react-hot-toast';
 import { listEvents, deleteEvent } from '../lib/googleCalendar';
 import { CompromissoForm } from '../components/CompromissoForm';
+import { ConfirmModal } from '../components/ConfirmModal';
 import './Compromissos.css';
 
 const locales = {
@@ -40,6 +41,31 @@ export function Compromissos() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [eventoParaDeletar, setEventoParaDeletar] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
+
+    const handleConfirmDisconnect = async () => {
+        try {
+            setIsAuthenticating(true);
+            const { error } = await supabase.from('auth_tokens').delete().not('id', 'is', null);
+            if (error) throw error;
+
+            // Limpar tokens
+            localStorage.removeItem('google_calendar_token');
+            localStorage.removeItem('google_access_token');
+            localStorage.removeItem('google_refresh_token');
+
+            setIsDisconnectModalOpen(false);
+            setIsAuthenticated(false);
+            setEvents([]);
+            toast.success('Google Calendar desconectado com sucesso.');
+        } catch (error) {
+            console.error("Erro ao desconectar:", error);
+            toast.error("Falha ao desconectar Google Calendar.");
+            setIsDisconnectModalOpen(false);
+        } finally {
+            setIsAuthenticating(false);
+        }
+    };
 
     useEffect(() => {
         checkAuthAndHandleCallback();
@@ -244,10 +270,7 @@ export function Compromissos() {
                     <button className="btn-primary" onClick={() => handleNovaInteracao()}>
                         <Plus size={18} /> Novo Compromisso
                     </button>
-                    {/* LogOut action silencioso caso queira trocar de conta */}
-                    <button className="btn-icon" onClick={() => {
-                        toast('Para deslogar, revoque a permissão no painel do Google');
-                    }} title="Desconectar">
+                    <button className="btn-icon" onClick={() => setIsDisconnectModalOpen(true)} title="Desconectar">
                         <LogOut size={20} color="var(--text-secondary)" />
                     </button>
                 </div>
@@ -379,6 +402,15 @@ export function Compromissos() {
                     </div>
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={isDisconnectModalOpen}
+                title="Desconectar Calendar?"
+                description="Tem certeza que deseja desconectar o Google Calendar? Os compromissos existentes não serão afetados."
+                confirmText="Sim, Desconectar"
+                onConfirm={handleConfirmDisconnect}
+                onCancel={() => setIsDisconnectModalOpen(false)}
+            />
         </div>
     );
 }
