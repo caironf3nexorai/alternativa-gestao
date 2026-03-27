@@ -12,6 +12,7 @@ const routeNames: Record<string, string> = {
     '/compromissos': 'Compromissos',
     '/configuracoes': 'Configurações',
     '/contratos': 'Contratos',
+    '/emails': 'Emails',
 };
 
 interface HeaderProps {

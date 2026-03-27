@@ -11,6 +11,7 @@ import { Configuracoes } from './pages/Configuracoes';
 import { SolicitacaoPublica } from './pages/SolicitacaoPublica';
 import { Contratos } from './pages/Contratos';
 import { ContratoDetail } from './pages/ContratoDetail';
+import { Emails } from './pages/Emails';
 import { SettingsProvider } from './hooks/useSettings';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
             <Route path="/patrimonio" element={<Patrimonio />} />
             <Route path="/agendas" element={<Agendas />} />
             <Route path="/compromissos" element={<Compromissos />} />
+            <Route path="/emails" element={<Emails />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="*" element={<div>Página não encontrada</div>} />
           </Route>

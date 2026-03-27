@@ -121,6 +121,7 @@ export function Compromissos() {
             // 1. Verificar se estamos voltando do Google com um CODE na URL
             const urlParams = new URLSearchParams(window.location.search);
             const code = urlParams.get('code');
+            const state = urlParams.get('state');
 
             if (code) {
                 setIsAuthenticating(true);
@@ -148,6 +149,12 @@ export function Compromissos() {
                     if (error) throw error;
 
                     toast.success('Conectado ao Google Calendar!', { id: 'oauth' });
+                    
+                    if (state && state.startsWith('/')) {
+                        window.location.href = state;
+                        return;
+                    }
+                    
                     setIsAuthenticated(true);
                 }
             } else {

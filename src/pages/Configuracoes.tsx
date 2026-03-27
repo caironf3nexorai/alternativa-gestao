@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Save, Upload, User, Globe, Building2, Link as LinkIcon, Database, Calendar as CalendarIcon, Loader2, Key, Eye, EyeOff } from 'lucide-react';
+import { Save, Upload, User, Globe, Building2, Link as LinkIcon, Database, Calendar as CalendarIcon, Loader2, Key, Eye, EyeOff, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSettings } from '../hooks/useSettings';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { getGoogleAuthUrl } from '../lib/googleAuth';
 import './Configuracoes.css';
 
 export function Configuracoes() {
@@ -418,9 +419,13 @@ export function Configuracoes() {
                                         </div>
                                     </div>
                                 </div>
-                                {calendarStatus === 'connected' && (
+                                {calendarStatus === 'connected' ? (
                                     <button className="btn-disconnect" onClick={handleDisconnectCalendar}>
                                         Desconectar
+                                    </button>
+                                ) : (
+                                    <button className="btn-primary" onClick={() => window.location.href = getGoogleAuthUrl('/configuracoes')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <Plus size={16} /> Conectar ao Google
                                     </button>
                                 )}
                             </div>

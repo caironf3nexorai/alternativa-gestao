@@ -5,15 +5,19 @@ import { supabase } from './supabase';
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET;
 const REDIRECT_URI = `${window.location.origin}/compromissos`; // URL da página de compromissos
-const SCOPES = 'https://www.googleapis.com/auth/calendar.events';
+const SCOPES = [
+    'https://www.googleapis.com/auth/calendar.events',
+    'https://www.googleapis.com/auth/gmail.modify',
+    'https://www.googleapis.com/auth/gmail.send'
+].join(' ');
 
 /**
  * 1. Gera a URL de Autenticação do Google
  * Inclui access_type=offline e prompt=consent para forçar a devolução do refresh_token
  */
-export function getGoogleAuthUrl() {
+export function getGoogleAuthUrl(returnTo?: string) {
     const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
-    const options = {
+    const options: Record<string, string> = {
         redirect_uri: REDIRECT_URI,
         client_id: CLIENT_ID,
         access_type: 'offline',
@@ -21,6 +25,9 @@ export function getGoogleAuthUrl() {
         prompt: 'consent',
         scope: SCOPES,
     };
+    if (returnTo) {
+        options.state = returnTo;
+    }
     const qs = new URLSearchParams(options);
     return `${rootUrl}?${qs.toString()}`;
 }
@@ -135,4 +142,28 @@ export async function getValidAccessToken(): Promise<string | null> {
  */
 export async function disconnectGoogleCalendar() {
     await supabase.from('auth_tokens').delete().not('id', 'is', null); // Delete table content blindly (since it's single user MVP essentially)
+}
+
+/**
+ * Verifica na API do Google se o token atual (ativo) possui os escopos de Gmail exigidos
+ */
+export async function checkMissingGmailScopes(): Promise<boolean> {
+    const token = await getValidAccessToken();
+    if (!token) return false; // Se nem logado está, não exibe banner "novos escopos faltantes", exibe os banners normais de Conectar
+
+    try {
+        const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${token}`);
+        if (!response.ok) return false;
+        
+        const data = await response.json();
+        const scopes = data.scope || '';
+        
+        const hasGmailModify = scopes.includes('gmail.modify');
+        const hasGmailSend = scopes.includes('gmail.send');
+        
+        // Se falta algum dos de Gmail, retorna true informando que "sim, faltam escopos"
+        return !(hasGmailModify && hasGmailSend);
+    } catch {
+        return false;
+    }
 }

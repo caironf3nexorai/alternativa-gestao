@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Wrench, Package, Book, Calendar, Settings, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, Wrench, Package, Book, Calendar, Settings, FileText, Mail } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useSettings } from '../hooks/useSettings';
 import './Sidebar.css';
@@ -14,6 +14,7 @@ export function Sidebar({ onItemClick, isOpen }: SidebarProps) {
         { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
         { name: 'Clientes', path: '/clientes', icon: <Users size={20} /> },
         { name: 'Contratos', path: '/contratos', icon: <FileText size={20} /> },
+        { name: 'Emails', path: '/emails', icon: <Mail size={20} /> },
         { name: 'Equipamentos', path: '/equipamentos', icon: <Wrench size={20} /> },
         { name: 'Patrimônio', path: '/patrimonio', icon: <Package size={20} /> },
         { name: 'Agendas', path: '/agendas', icon: <Book size={20} /> },
