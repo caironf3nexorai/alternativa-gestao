@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Edit2, Trash2, Calendar, CheckSquare, Clock, ChevronLeft } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar, CheckSquare, Clock, ChevronLeft, MessageCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AgendaForm } from '../components/AgendaForm';
 import { AnotacaoForm } from '../components/AnotacaoForm';
@@ -14,6 +14,14 @@ interface Agenda {
     pendentes?: number; // Contagem sintética
 }
 
+interface AnotacaoItem {
+    id: string;
+    anotacao_id: string;
+    texto: string;
+    concluido: boolean;
+    ordem: number;
+}
+
 interface Anotacao {
     id: string;
     agenda_id: string;
@@ -21,6 +29,8 @@ interface Anotacao {
     descricao: string | null;
     data_vencimento: string | null;
     status: 'pendente' | 'concluido';
+    tipo: 'descricao' | 'lista';
+    agendas_anotacoes_itens?: AnotacaoItem[];
 }
 
 export function Agendas() {
@@ -66,7 +76,7 @@ export function Agendas() {
                 .select('agenda_id, status')
                 .eq('status', 'pendente');
 
-            const contagens = (anotData || []).reduce((acc: any, curr: any) => {
+            const contagens = (anotData || []).reduce((acc: Record<string, number>, curr: { agenda_id: string }) => {
                 acc[curr.agenda_id] = (acc[curr.agenda_id] || 0) + 1;
                 return acc;
             }, {});
@@ -97,11 +107,18 @@ export function Agendas() {
             setLoadingAnotacoes(true);
             const { data, error } = await supabase
                 .from('agendas_anotacoes')
-                .select('*')
+                .select('*, agendas_anotacoes_itens(*)')
                 .eq('agenda_id', aId);
 
             if (error) throw error;
-            setAnotacoes(data || []);
+            
+            // Format and sort items inside annotations
+            const formattedData = (data || []).map(a => ({
+                ...a,
+                agendas_anotacoes_itens: (a.agendas_anotacoes_itens || []).sort((x: AnotacaoItem, y: AnotacaoItem) => x.ordem - y.ordem)
+            }));
+            
+            setAnotacoes(formattedData);
         } catch (err) {
             console.error(err);
             toast.error('Erro ao buscar anotações da agenda');
@@ -253,14 +270,87 @@ export function Agendas() {
             // Rollback on error
             fetchAnotacoes(agendaAtivaId!);
         } else {
-            // Atualizar o contador da sidebar visualmente de forma estúpida e rápida
+            // Atualizar o contador da sidebar visualmente
             setAgendas(prev => prev.map(ag => {
                 if (ag.id === agendaAtivaId) {
                     return { ...ag, pendentes: novoStatus === 'concluido' ? (ag.pendentes || 1) - 1 : (ag.pendentes || 0) + 1 };
                 }
                 return ag;
             }));
+            
+            // If it's a checklist, we need to auto check/uncheck all items?
+            // User requested: "Histórico de Itens: Os itens permanecem marcados após a conclusão automática." 
+            // So if checking the main box manually, maybe leave items as is or check them all.
+            // If the user checks the main checkbox on a list, we shouldn't wipe the items, just set status.
         }
+    };
+
+    const handleToggleChecklistItem = async (anotacao: Anotacao, item: AnotacaoItem) => {
+        const novoStatusItem = !item.concluido;
+        
+        // Optimistic UI for item
+        const novosItens = anotacao.agendas_anotacoes_itens!.map(i => i.id === item.id ? { ...i, concluido: novoStatusItem } : i);
+        const todosConcluidos = novosItens.length > 0 && novosItens.every(i => i.concluido);
+        
+        const novoStatusAnotacao = todosConcluidos ? 'concluido' : 'pendente';
+        const mudouStatusMatriz = novoStatusAnotacao !== anotacao.status;
+
+        setAnotacoes(prev => prev.map(a => a.id === anotacao.id ? { 
+            ...a, 
+            status: novoStatusAnotacao, 
+            agendas_anotacoes_itens: novosItens 
+        } : a));
+
+        // Update item in db
+        const { error: errItem } = await supabase.from('agendas_anotacoes_itens').update({ concluido: novoStatusItem }).eq('id', item.id);
+        if (errItem) {
+            toast.error('Erro ao atualizar item do checklist');
+            fetchAnotacoes(agendaAtivaId!);
+            return;
+        }
+
+        // Se mudou o status da anotação matriz (esgotou checklist ou desmarcou um item logo após estar cheio)
+        if (mudouStatusMatriz) {
+            const { error: errAnot } = await supabase.from('agendas_anotacoes').update({ status: novoStatusAnotacao }).eq('id', anotacao.id);
+            if (errAnot) {
+                toast.error('Erro ao atualizar status da anotação matriz');
+                fetchAnotacoes(agendaAtivaId!);
+            } else {
+                 setAgendas(prev => prev.map(ag => {
+                    if (ag.id === agendaAtivaId) {
+                        return { ...ag, pendentes: novoStatusAnotacao === 'concluido' ? (ag.pendentes || 1) - 1 : (ag.pendentes || 0) + 1 };
+                    }
+                    return ag;
+                }));
+            }
+        }
+    };
+
+    const handleShareWhatsApp = (anotacao: Anotacao) => {
+        const agendaObj = agendas.find(a => a.id === anotacao.agenda_id);
+        const nomeAgenda = agendaObj ? agendaObj.nome : 'Agenda';
+        
+        let msg = `📋 *${anotacao.titulo}*\nAgenda: ${nomeAgenda}\n📅 Vencimento: ${anotacao.data_vencimento ? formataData(anotacao.data_vencimento) : 'Sem data'}\n\n`;
+
+        if (anotacao.tipo === 'descricao') {
+            msg += `${anotacao.descricao || 'Nenhuma descrição'}`;
+        } else {
+            msg += `Lista de itens:\n`;
+            const itens = anotacao.agendas_anotacoes_itens || [];
+            itens.forEach(i => {
+                msg += i.concluido ? `☑️ ~${i.texto}~\n` : `☐ ${i.texto}\n`;
+            });
+            const concluidos = itens.filter(i => i.concluido).length;
+            msg += `\nProgresso: ${concluidos}/${itens.length} itens concluídos`;
+        }
+
+        const encodedMsg = encodeURIComponent(msg);
+        const isMobile = window.innerWidth < 768;
+        const url = isMobile 
+            ? `whatsapp://send?text=${encodedMsg}` 
+            : `https://web.whatsapp.com/send?text=${encodedMsg}`;
+        
+        window.open(url, '_blank');
     };
 
     const handleDeletarAnotacao = (id: string) => {
@@ -419,11 +509,40 @@ export function Agendas() {
                                                             className="anotacao-checkbox"
                                                             checked={cConcluida}
                                                             onChange={() => handleToggleStatus(anot)}
-                                                            title="Marcar como concluída"
+                                                            title="Marcar como concluída manualmente"
                                                         />
-                                                        <div>
+                                                        <div style={{ flex: 1 }}>
                                                             <h4 className="anotacao-title">{anot.titulo}</h4>
-                                                            {anot.descricao && <p className="anotacao-desc" style={{ marginTop: '8px' }}>{anot.descricao}</p>}
+                                                            {anot.tipo === 'descricao' && anot.descricao && (
+                                                                <p className="anotacao-desc" style={{ marginTop: '8px', whiteSpace: 'pre-wrap' }}>
+                                                                    {anot.descricao}
+                                                                </p>
+                                                            )}
+                                                            {anot.tipo === 'lista' && anot.agendas_anotacoes_itens && anot.agendas_anotacoes_itens.length > 0 && (
+                                                                <div className="anotacao-checklist" style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                                    {anot.agendas_anotacoes_itens.map(item => (
+                                                                        <label key={item.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer' }}>
+                                                                            <input 
+                                                                                type="checkbox" 
+                                                                                checked={item.concluido} 
+                                                                                onChange={() => handleToggleChecklistItem(anot, item)} 
+                                                                                style={{ marginTop: '3px', accentColor: 'var(--primary-red)' }}
+                                                                            />
+                                                                            <span style={{ 
+                                                                                textDecoration: item.concluido ? 'line-through' : 'none', 
+                                                                                color: item.concluido ? 'var(--text-secondary)' : 'inherit', 
+                                                                                fontSize: '14px',
+                                                                                lineHeight: '1.4'
+                                                                            }}>
+                                                                                {item.texto}
+                                                                            </span>
+                                                                        </label>
+                                                                    ))}
+                                                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 500 }}>
+                                                                        Progresso: {anot.agendas_anotacoes_itens.filter(i => i.concluido).length}/{anot.agendas_anotacoes_itens.length} itens concluídos
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -438,6 +557,14 @@ export function Agendas() {
                                                         )}
                                                     </div>
                                                     <div style={{ display: 'flex', gap: '8px' }}>
+                                                        <button
+                                                            className="btn-icon text-secondary"
+                                                            onClick={() => handleShareWhatsApp(anot)}
+                                                            title="Compartilhar via WhatsApp"
+                                                            style={{ color: '#25D366' }}
+                                                        >
+                                                            <MessageCircle size={16} />
+                                                        </button>
                                                         <button
                                                             className="btn-icon text-secondary"
                                                             onClick={() => { setAnotacaoEditando(anot); setIsAnotacaoModalOpen(true); }}
