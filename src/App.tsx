@@ -9,6 +9,8 @@ import { Agendas } from './pages/Agendas';
 import { Compromissos } from './pages/Compromissos';
 import { Configuracoes } from './pages/Configuracoes';
 import { SolicitacaoPublica } from './pages/SolicitacaoPublica';
+import { Contratos } from './pages/Contratos';
+import { ContratoDetail } from './pages/ContratoDetail';
 import { SettingsProvider } from './hooks/useSettings';
 
 function App() {
@@ -28,6 +30,8 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="clientes" element={<Clientes />} />
+            <Route path="/contratos" element={<Contratos />} />
+            <Route path="/contratos/:id" element={<ContratoDetail />} />
             <Route path="equipamentos" element={<Equipamentos />} />
             <Route path="/patrimonio" element={<Patrimonio />} />
             <Route path="/agendas" element={<Agendas />} />

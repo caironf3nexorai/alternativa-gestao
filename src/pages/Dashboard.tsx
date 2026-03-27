@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { listEvents } from '../lib/googleCalendar';
-import { DollarSign, Package, Settings, ClipboardList, Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
+import { DollarSign, Package, Settings, ClipboardList, Calendar as CalendarIcon, AlertTriangle, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -21,13 +21,15 @@ export function Dashboard() {
         patrimonioTotal: 0,
         equipamentosDisponiveis: 0,
         operacao: 0,
-        tarefasPendentes: 0
+        tarefasPendentes: 0,
+        contratosAtivos: 0
     });
 
     const [compromissos, setCompromissos] = useState<any[]>([]);
     const [authCalendarError, setAuthCalendarError] = useState(false);
 
     const [anotacoesCriticas, setAnotacoesCriticas] = useState<any[]>([]);
+    const [contratosAlerta, setContratosAlerta] = useState<any[]>([]);
     const [equipamentosEmCampo, setEquipamentosEmCampo] = useState<any[]>([]);
 
     useEffect(() => {
@@ -59,11 +61,20 @@ export function Dashboard() {
 
                 if (errAnot) throw errAnot;
 
+                // 3) Contratos Ativos
+                const { count: countContratos, error: errContratos } = await supabase
+                    .from('contratos')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'ativo');
+                
+                if (errContratos) throw errContratos;
+
                 setSumario({
                     patrimonioTotal: sumPatrimonio,
                     equipamentosDisponiveis: countDisponiveis,
                     operacao: countOperacao,
-                    tarefasPendentes: countPendentes || 0
+                    tarefasPendentes: countPendentes || 0,
+                    contratosAtivos: countContratos || 0
                 });
 
             } catch (err: any) {
@@ -131,6 +142,33 @@ export function Dashboard() {
             }
         };
 
+        const fetchContratosAlerta = async () => {
+            try {
+                // Fetch active contratos with encerramento date
+                const { data, error } = await supabase
+                    .from('contratos')
+                    .select('id, numero_contrato, data_prevista_encerramento, cliente:clientes(nome)')
+                    .eq('status', 'ativo')
+                    .not('data_prevista_encerramento', 'is', null);
+
+                if (error) throw error;
+
+                const today = new Date();
+                today.setHours(0,0,0,0);
+
+                const comAlertas = (data || []).map(c => {
+                    const prevDate = new Date(c.data_prevista_encerramento);
+                    const diffTime = prevDate.getTime() - today.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return { ...c, diffDays };
+                }).filter(c => c.diffDays <= 7).sort((a, b) => a.diffDays - b.diffDays);
+                
+                setContratosAlerta(comAlertas);
+            } catch (err) {
+                console.error("Erro fetchContratosAlerta", err);
+            }
+        };
+
         const fetchEquipamentosEmCampo = async () => {
             try {
                 const { data, error } = await supabase
@@ -159,6 +197,7 @@ export function Dashboard() {
                 fetchSumario(),
                 fetchCalendarEvents(),
                 fetchAnotacoesCriticas(),
+                fetchContratosAlerta(),
                 fetchEquipamentosEmCampo()
             ]);
         };
@@ -252,6 +291,15 @@ export function Dashboard() {
                             <div className="summary-info">
                                 <h3>Tarefas Pendentes</h3>
                                 <p className="summary-value">{sumario.tarefasPendentes}</p>
+                            </div>
+                        </div>
+                        <div className="summary-card" onClick={() => navigate('/contratos')}>
+                            <div className="summary-icon" style={{ backgroundColor: 'rgba(156, 163, 175, 0.1)', color: 'var(--text-main)' }}>
+                                <FileText size={24} />
+                            </div>
+                            <div className="summary-info">
+                                <h3>Contratos Ativos</h3>
+                                <p className="summary-value">{sumario.contratosAtivos}</p>
                             </div>
                         </div>
                     </>
@@ -352,6 +400,34 @@ export function Dashboard() {
                                 </div>
                             ))
                         )}
+
+                        {/* Listar os contratos vencendo/vencidos abaixo das anotações se houver */}
+                        {!loadingAnotacoes && contratosAlerta.map(c => (
+                            <div key={`cont-${c.id}`} style={{
+                                padding: '12px',
+                                borderRadius: '8px',
+                                backgroundColor: 'var(--bg-main)',
+                                border: `1px solid ${c.diffDays < 0 ? 'var(--error)' : 'var(--warning)'}`
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                    <div style={{ fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}><FileText size={14}/> Contrato {c.numero_contrato || c.id.split('-')[0]}</div>
+                                    <div style={{
+                                        fontSize: '11px',
+                                        fontWeight: 700,
+                                        padding: '2px 6px',
+                                        borderRadius: '4px',
+                                        backgroundColor: c.diffDays < 0 ? 'rgba(231, 76, 60, 0.2)' : 'rgba(243, 156, 18, 0.2)',
+                                        color: c.diffDays < 0 ? 'var(--error)' : 'var(--warning)'
+                                    }}>
+                                        {c.diffDays < 0 ? `Vencido há ${Math.abs(c.diffDays)} dias` : c.diffDays === 0 ? 'Vence HOJE' : `Vence em ${c.diffDays} dias`}
+                                    </div>
+                                </div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                    Cliente: {c.cliente?.nome || '-'}
+                                </div>
+                            </div>
+                        ))}
+
                     </div>
                 </div>
 

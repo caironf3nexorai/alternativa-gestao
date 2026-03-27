@@ -13,7 +13,8 @@ interface Equipamento {
     status: 'disponivel' | 'alugado' | 'manutencao' | 'baixado';
     valor_aquisicao: number | null;
     data_aquisicao: string | null;
-    categorias_equipamento?: any; // Join relation
+    categorias_equipamento?: any;
+    contrato_equipamentos?: any[]; // For knowing the client
 }
 
 export function Patrimonio() {
@@ -43,7 +44,8 @@ export function Patrimonio() {
           status,
           valor_aquisicao,
           data_aquisicao,
-          categorias_equipamento(nome)
+          categorias_equipamento(nome),
+          contrato_equipamentos(contratos(status, clientes(nome)))
         `)
                 .order('nome');
 
@@ -274,6 +276,7 @@ export function Patrimonio() {
                                         <th>Equipamento</th>
                                         <th>Categoria</th>
                                         <th>Status</th>
+                                        <th>Cliente Atual</th>
                                         <th>Data Aquis.</th>
                                         <th style={{ textAlign: 'right' }}>Valor Aquis.</th>
                                         <th style={{ width: '60px' }}></th>
@@ -289,6 +292,9 @@ export function Patrimonio() {
                                                 <span className={`status-badge badge-${eqp.status}`}>
                                                     {getStatusLabel(eqp.status)}
                                                 </span>
+                                            </td>
+                                            <td style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                                {eqp.status === 'alugado' && eqp.contrato_equipamentos?.find((ce: any) => ce.contratos?.status === 'ativo')?.contratos?.clientes?.nome ? eqp.contrato_equipamentos.find((ce: any) => ce.contratos?.status === 'ativo').contratos.clientes.nome : '-'}
                                             </td>
                                             <td>{formataData(eqp.data_aquisicao)}</td>
                                             <td style={{ textAlign: 'right', fontWeight: '500', color: eqp.status === 'baixado' ? 'inherit' : 'var(--text-main)' }}>
@@ -319,6 +325,9 @@ export function Patrimonio() {
                                         </span>
                                     </div>
                                     <p>Categoria: {eqp.categorias_equipamento?.nome || '-'}</p>
+                                    {eqp.status === 'alugado' && eqp.contrato_equipamentos?.find((ce: any) => ce.contratos?.status === 'ativo')?.contratos?.clientes?.nome && (
+                                        <p>Cliente: {eqp.contrato_equipamentos.find((ce: any) => ce.contratos?.status === 'ativo').contratos.clientes.nome}</p>
+                                    )}
                                     <p>Data Aquis.: {formataData(eqp.data_aquisicao)}</p>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
                                         <span style={{ color: eqp.status === 'baixado' ? 'inherit' : 'var(--text-main)', fontWeight: 600 }}>

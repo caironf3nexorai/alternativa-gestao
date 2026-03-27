@@ -11,6 +11,7 @@ const routeNames: Record<string, string> = {
     '/agendas': 'Agendas',
     '/compromissos': 'Compromissos',
     '/configuracoes': 'Configurações',
+    '/contratos': 'Contratos',
 };
 
 interface HeaderProps {
@@ -19,7 +20,15 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
     const location = useLocation();
-    const pageTitle = routeNames[location.pathname] || 'Página Não Encontrada';
+    let pageTitle = routeNames[location.pathname];
+    
+    if (!pageTitle) {
+        if (location.pathname.startsWith('/contratos/')) {
+            pageTitle = 'Detalhes do Contrato';
+        } else {
+            pageTitle = 'Página Não Encontrada';
+        }
+    }
 
     const currentDate = format(new Date(), "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR });
     // Capitalize first letter

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Search, Edit2, Power } from 'lucide-react';
+import { Plus, Search, Edit2, Power, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatPhone, formatCnpj } from '../lib/utils';
 import { ClienteForm } from '../components/ClienteForm';
+import { ImportClientsModal } from '../components/ImportClientsModal';
 import './Clientes.css';
 
 interface Cliente {
@@ -17,6 +18,7 @@ interface Cliente {
     observacoes: string;
     ativo: boolean;
     created_at: string;
+    contratos?: any[];
 }
 
 type FilterStatus = 'todos' | 'ativos' | 'inativos';
@@ -31,13 +33,14 @@ export function Clientes() {
     // Controle do Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [clienteEditando, setClienteEditando] = useState<Cliente | null>(null);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     const fetchClientes = async () => {
         try {
             setLoading(true);
             const { data, error } = await supabase
                 .from('clientes')
-                .select('*')
+                .select('*, contratos(id, status)')
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -145,10 +148,16 @@ export function Clientes() {
                     </div>
                 </div>
 
-                <button className="btn-primary" onClick={handleNovo}>
-                    <Plus size={18} />
-                    Novo Cliente
-                </button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <button className="btn-secondary" onClick={() => setIsImportModalOpen(true)}>
+                        <Download size={18} />
+                        Importar
+                    </button>
+                    <button className="btn-primary" onClick={handleNovo}>
+                        <Plus size={18} />
+                        Novo Cliente
+                    </button>
+                </div>
             </div>
 
             <div className="table-container">
@@ -175,7 +184,16 @@ export function Clientes() {
                                 <tbody>
                                     {clientesFiltrados.map((cliente) => (
                                         <tr key={cliente.id} className={!cliente.ativo ? 'row-inactive' : ''}>
-                                            <td className="fw-600">{cliente.nome}</td>
+                                            <td className="fw-600">
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    {cliente.nome}
+                                                    {cliente.contratos && cliente.contratos.filter((c: any) => c.status === 'ativo').length > 0 && (
+                                                        <span style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--primary-red)', padding: '2px 6px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}>
+                                                            {cliente.contratos.filter((c: any) => c.status === 'ativo').length} Contrato(s)
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td>{cliente.cnpj ? formatCnpj(cliente.cnpj) : '-'}</td>
                                             <td>{cliente.contato_nome || '-'}</td>
                                             <td>{cliente.contato_telefone ? formatPhone(cliente.contato_telefone) : '-'}</td>
@@ -205,8 +223,15 @@ export function Clientes() {
                         <div className="mobile-card-list">
                             {clientesFiltrados.map((cliente) => (
                                 <div key={cliente.id} className="mobile-card">
-                                    <h3>{cliente.nome}</h3>
-                                    <p>{cliente.cnpj ? formatCnpj(cliente.cnpj) : '-'}</p>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <h3 style={{ margin: 0 }}>{cliente.nome}</h3>
+                                        {cliente.contratos && cliente.contratos.filter((c: any) => c.status === 'ativo').length > 0 && (
+                                            <span style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--primary-red)', padding: '2px 6px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}>
+                                                {cliente.contratos.filter((c: any) => c.status === 'ativo').length} Contrato(s)
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p style={{ marginTop: '4px' }}>{cliente.cnpj ? formatCnpj(cliente.cnpj) : '-'}</p>
                                     <p>Contato: {cliente.contato_nome || '-'}</p>
                                     <p>Tel: {cliente.contato_telefone ? formatPhone(cliente.contato_telefone) : '-'}</p>
                                     <div className="mobile-card-footer">
@@ -232,12 +257,19 @@ export function Clientes() {
                     </>
                 )}
             </div>                {isModalOpen && (
-                <ClienteForm
-                    clienteEdicao={clienteEditando}
-                    onClose={handleCloseModal}
-                    onSuccess={handleSuccessModal}
-                />
-            )}
+                    <ClienteForm
+                        clienteEdicao={clienteEditando}
+                        onClose={handleCloseModal}
+                        onSuccess={handleSuccessModal}
+                    />
+                )}
+
+                {isImportModalOpen && (
+                    <ImportClientsModal
+                        onClose={() => setIsImportModalOpen(false)}
+                        onSuccess={() => { setIsImportModalOpen(false); fetchClientes(); }}
+                    />
+                )}
         </div>
     );
 }

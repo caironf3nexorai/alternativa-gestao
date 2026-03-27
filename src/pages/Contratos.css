@@ -1,0 +1,25 @@
+/* Cores específicas dos Badges de Contrato baseados nas regras de UI */
+
+.status-ativo {
+    background-color: rgba(37, 211, 102, 0.1) !important;
+    color: #25D366 !important;
+}
+
+.status-negociacao {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    color: #3b82f6 !important;
+}
+
+.status-suspenso {
+    background-color: rgba(245, 158, 11, 0.1) !important;
+    color: #f59e0b !important;
+}
+
+.status-encerrado {
+    background-color: rgba(156, 163, 175, 0.1) !important;
+    color: #9ca3af !important;
+}
+
+.btn-danger-theme:hover {
+    filter: brightness(0.9);
+}
