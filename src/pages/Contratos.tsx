@@ -32,6 +32,7 @@ export function Contratos() {
     const [statusFilter, setStatusFilter] = useState<FilterStatus>('todos');
     
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [contratoEditando, setContratoEditando] = useState<Contrato | null>(null);
     const [contratoParaEncerrar, setContratoParaEncerrar] = useState<string | null>(null);
     
     // WIP Modals integration to come
@@ -114,7 +115,7 @@ export function Contratos() {
                     </div>
                 </div>
 
-                <button className="btn-primary btn-danger-theme" onClick={() => setIsModalOpen(true)} style={{ backgroundColor: 'var(--primary-red)' }}>
+                <button className="btn-primary btn-danger-theme" onClick={() => { setContratoEditando(null); setIsModalOpen(true); }} style={{ backgroundColor: 'var(--primary-red)' }}>
                     <Plus size={18} />
                     Novo Contrato
                 </button>
@@ -152,7 +153,7 @@ export function Contratos() {
                                             <button className="btn-icon" title="Visualizar" onClick={() => navigate(`/contratos/${contrato.id}`)}>
                                                 <Eye size={16} />
                                             </button>
-                                            <button className="btn-icon" title="Editar" onClick={() => {}}>
+                                            <button className="btn-icon" title="Editar" onClick={() => { setContratoEditando(contrato); setIsModalOpen(true); }}>
                                                 <Edit2 size={16} />
                                             </button>
                                             {contrato.status !== 'encerrado' && (
@@ -171,9 +172,11 @@ export function Contratos() {
             
             {isModalOpen && (
                 <ContratoForm
-                    onClose={() => setIsModalOpen(false)}
+                    contratoEdicao={contratoEditando}
+                    onClose={() => { setIsModalOpen(false); setContratoEditando(null); }}
                     onSuccess={() => {
                         setIsModalOpen(false);
+                        setContratoEditando(null);
                         fetchContratos();
                     }}
                 />

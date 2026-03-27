@@ -50,7 +50,38 @@ export function ContratoForm({ contratoEdicao, onClose, onSuccess }: ContratoFor
             if (equipRes.data) setEquipamentosDisponiveis(equipRes.data);
             
             if (isEdit) {
-                // Preencher com o contrato (WIP - futuramente faríamos o fetch nested aqui e popularíamos)
+                setNumeroContrato(contratoEdicao.numero_contrato || '');
+                setClienteId(contratoEdicao.cliente_id || '');
+                setStatus(contratoEdicao.status || 'ativo');
+                setDataInicio(contratoEdicao.data_inicio || '');
+                setDataEncerramento(contratoEdicao.data_prevista_encerramento || '');
+                setValorMensal(contratoEdicao.valor_mensal ? contratoEdicao.valor_mensal.toString() : '');
+                setValorTotal(contratoEdicao.valor_total ? contratoEdicao.valor_total.toString() : '');
+                setObservacoes(contratoEdicao.observacoes || '');
+
+                const [eqRes, docRes] = await Promise.all([
+                    supabase.from('contrato_equipamentos').select('*, equipamento:equipamentos(nome, codigo_patrimonio)').eq('contrato_id', contratoEdicao.id),
+                    supabase.from('contrato_documentos').select('*').eq('contrato_id', contratoEdicao.id)
+                ]);
+
+                if (eqRes.data) {
+                    setEquipamentosSelecionados(eqRes.data.map((e: any) => ({
+                        equipamento_id: e.equipamento_id,
+                        nome: e.equipamento?.nome,
+                        codigo: e.equipamento?.codigo_patrimonio,
+                        valor_unitario: e.valor_unitario || 0,
+                        data_retorno_prevista: e.data_retorno_prevista || null
+                    })));
+                }
+
+                if (docRes.data) {
+                    setDocumentos(docRes.data.map((d: any) => ({
+                        nome: d.nome,
+                        descricao: d.descricao,
+                        concluido: d.concluido,
+                        arquivo_url: d.arquivo_url
+                    })));
+                }
             }
         } catch {
             toast.error('Erro ao carregar dados auxiliares');
@@ -153,9 +184,22 @@ export function ContratoForm({ contratoEdicao, onClose, onSuccess }: ContratoFor
             let contratoId = '';
 
             if (isEdit) {
-                // Update implementation ...
+                const { error: errUpd } = await supabase
+                    .from('contratos')
+                    .update(contratoPayload)
+                    .eq('id', contratoEdicao.id);
+                if (errUpd) throw errUpd;
+                contratoId = contratoEdicao.id;
+
+                const { data: oldEqs } = await supabase.from('contrato_equipamentos').select('equipamento_id').eq('contrato_id', contratoId);
+                if (oldEqs && oldEqs.length > 0) {
+                    const oldIds = oldEqs.map(e => e.equipamento_id);
+                    await supabase.from('equipamentos').update({ status: 'disponivel' }).in('id', oldIds);
+                }
+
+                await supabase.from('contrato_equipamentos').delete().eq('contrato_id', contratoId);
+                await supabase.from('contrato_documentos').delete().eq('contrato_id', contratoId);
             } else {
-                // Insert Contrato
                 const { data: contData, error: contErr } = await supabase
                     .from('contratos')
                     .insert(contratoPayload)
@@ -163,33 +207,31 @@ export function ContratoForm({ contratoEdicao, onClose, onSuccess }: ContratoFor
                     .single();
                 if (contErr) throw contErr;
                 contratoId = contData.id;
+            }
 
-                // Insert Relacionais
-                if (equipamentosSelecionados.length > 0) {
-                    const eqPayload = equipamentosSelecionados.map(eq => ({
-                        contrato_id: contratoId,
-                        equipamento_id: eq.equipamento_id,
-                        data_saida: dataInicio,
-                        data_retorno_prevista: eq.data_retorno_prevista,
-                        valor_unitario: eq.valor_unitario
-                    }));
-                    await supabase.from('contrato_equipamentos').insert(eqPayload);
+            if (equipamentosSelecionados.length > 0) {
+                const eqPayload = equipamentosSelecionados.map(eq => ({
+                    contrato_id: contratoId,
+                    equipamento_id: eq.equipamento_id,
+                    data_saida: dataInicio,
+                    data_retorno_prevista: eq.data_retorno_prevista,
+                    valor_unitario: eq.valor_unitario
+                }));
+                await supabase.from('contrato_equipamentos').insert(eqPayload);
 
-                    // Update Status Equipamento Master
-                    const eqIds = equipamentosSelecionados.map(e => e.equipamento_id);
-                    await supabase.from('equipamentos').update({ status: 'alugado' }).in('id', eqIds);
-                }
+                const eqIds = equipamentosSelecionados.map(e => e.equipamento_id);
+                await supabase.from('equipamentos').update({ status: 'alugado' }).in('id', eqIds);
+            }
 
-                if (documentos.length > 0) {
-                    const docPayload = documentos.map(d => ({
-                        contrato_id: contratoId,
-                        nome: d.nome,
-                        descricao: d.descricao,
-                        concluido: d.concluido,
-                        arquivo_url: d.arquivo_url || null
-                    }));
-                    await supabase.from('contrato_documentos').insert(docPayload);
-                }
+            if (documentos.length > 0) {
+                const docPayload = documentos.map(d => ({
+                    contrato_id: contratoId,
+                    nome: d.nome,
+                    descricao: d.descricao,
+                    concluido: d.concluido,
+                    arquivo_url: d.arquivo_url || null
+                }));
+                await supabase.from('contrato_documentos').insert(docPayload);
             }
 
             toast.success('Contrato salvo com sucesso!');
